@@ -1,0 +1,6 @@
+{
+  "name": "WHLLdev",
+  "description": "Interactive developer portfolio showcasing projects, skills, and an AI chat assistant for WHLLdev.me",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
