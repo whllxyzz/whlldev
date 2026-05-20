@@ -60,6 +60,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -79,6 +80,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
@@ -115,6 +118,7 @@ fun PortfolioScreen(
     val uiState by viewModel.uiState.collectAsState()
     var selectedTab by remember { mutableStateOf(0) }
     val uriHandler = LocalUriHandler.current
+    val context = LocalContext.current
 
     // Background Container (Bento Theme Soft Lavender)
     Box(
@@ -166,7 +170,20 @@ fun PortfolioScreen(
                 }
 
                 IconButton(
-                    onClick = { uriHandler.openUri("mailto:wilkaxyz15@gmail.com") },
+                    onClick = {
+                        try {
+                            uriHandler.openUri("mailto:wilkaxyz15@gmail.com")
+                        } catch (e: Exception) {
+                            android.widget.Toast.makeText(
+                                context,
+                                "Email client not found. Copied wilkaxyz15@gmail.com to clipboard",
+                                android.widget.Toast.LENGTH_LONG
+                            ).show()
+                            val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                            val clip = android.content.ClipData.newPlainText("email", "wilkaxyz15@gmail.com")
+                            clipboard.setPrimaryClip(clip)
+                        }
+                    },
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
@@ -706,6 +723,8 @@ fun ChatBotLayout(
     viewModel: PortfolioViewModel
 ) {
     val listState = rememberLazyListState()
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
 
     // Slide bottom scroll to last message on receipt
     LaunchedEffect(uiState.chatMessages.size, uiState.isAiTyping) {
@@ -778,7 +797,11 @@ fun ChatBotLayout(
                         .clip(RoundedCornerShape(12.dp))
                         .background(BentoCardBg2)
                         .border(BorderStroke(1.dp, BentoBorderColor), RoundedCornerShape(12.dp))
-                        .clickable { viewModel.handlePresetPrompt(prompt) }
+                        .clickable {
+                            keyboardController?.hide()
+                            focusManager.clearFocus()
+                            viewModel.handlePresetPrompt(prompt)
+                        }
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Text(
@@ -818,16 +841,20 @@ fun ChatBotLayout(
                     imeAction = ImeAction.Send
                 ),
                 keyboardActions = KeyboardActions(
-                    onSend = { viewModel.sendMessage() }
+                    onSend = {
+                        keyboardController?.hide()
+                        focusManager.clearFocus()
+                        viewModel.sendMessage()
+                    }
                 ),
-                colors = TextFieldDefaults.colors(
+                colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = BentoDarkText,
                     unfocusedTextColor = BentoDarkText,
                     cursorColor = BentoBrandPurple,
                     focusedContainerColor = BentoCardBg1,
                     unfocusedContainerColor = BentoCardBg1,
-                    focusedIndicatorColor = BentoBrandPurple,
-                    unfocusedIndicatorColor = BentoBorderColor
+                    focusedBorderColor = BentoBrandPurple,
+                    unfocusedBorderColor = BentoBorderColor
                 ),
                 shape = RoundedCornerShape(16.dp)
             )
@@ -835,7 +862,11 @@ fun ChatBotLayout(
             Spacer(modifier = Modifier.width(8.dp))
 
             IconButton(
-                onClick = { viewModel.sendMessage() },
+                onClick = {
+                    keyboardController?.hide()
+                    focusManager.clearFocus()
+                    viewModel.sendMessage()
+                },
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)

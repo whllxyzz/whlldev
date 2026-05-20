@@ -232,7 +232,7 @@ class PortfolioViewModel : ViewModel() {
                         isAiTyping = false
                     )
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 Log.e("PortfolioViewModel", "Error fetching Gemini response", e)
                 val errorMessage = Message(
                     id = (System.currentTimeMillis() + 2).toString(),
